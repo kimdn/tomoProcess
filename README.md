@@ -1,22 +1,22 @@
-Project directory
-All scripts should be run in the same base directory containing raw data. 
-Dependencies: This base directory must contain
-a /frames/ directory, containing the raw movies output from the camera
-a /stacks/ directory which contains .mdoc metadata files for each tilt series
-a gain reference in .dm4 format (gain reference name is not critical but .dm4 format is)
-a cryodirective.adoc file
-The base directory is allowed to contain other files, such as atlases, medium mag montages, or other individual images. No other .dm4 files besides the gain may be in this base directory (if some present, move to a new subdirectory to prevent issues)
-Parameters and definitions for cryodirective file can be found at: https://bio3d.colorado.edu/imod/doc/directives.html
-Scripts needed
-motionCorr.bash
-Restack_SerialEM.bash
-IMOD_Auto.bash
-allProcess.bash
-These scripts do not need to be located in the base directory, but must always be executed from the base directory location and should be stored together.
-motionCorr by default bins the raw frames by a factor of 2, and uses 5x5 patches on 2 GPUs. Settings must be edited in script if different options desired.
-Execution
-Each script can be run individually (in order) if desired. The order of execution should be:
-motionCorr.bash
-Restack_SerialEM.bash
-IMOD_Auto.bash
-If the cryodirective.adoc file is already expected to be accurate for the dataset, only the allProcess.bash script needs to be run (it will call each script sequentially)
+Project directory: All scripts should be run in the same base directory containing raw data. 
+Dependencies: This base directory must contain:
+1) a /frames/ directory, containing the raw movies output from the camera
+2) a /stacks/ directory which contains .mdoc metadata files for each tilt series
+3) a gain reference in .dm4 format (gain reference name is not critical but .dm4 format is)
+4) a cryodirective.adoc file
+*The base directory is allowed to contain other files, such as atlases, medium mag montages, or other individual images. No other .dm4 files besides the gain may be in this base directory (if some present, move to a new subdirectory to prevent issues)
+
+Script Running Order:
+1) motionCorr.bash
+2) Restack_SerialEM.bash
+3) IMOD_Auto.bash
+*If the cryodirective.adoc file is already expected to be accurate for the dataset, only the allProcess.bash script needs to be run (it will call each script sequentially)
+**Optionally, topazDenoise.bash can be run followed by reconstructFromNoisy.bash to create denoised datasets
+
+Script Running Order for Denoising:
+1) motionCorr.bash
+2) topazDenoise.bash
+3) Restack_SerialEM_denoise.bash
+4) IMOD_Auto_denoise.bash
+5) reconstructFromDenoise.bash
+*allProcessDenoise.bash executes scripts 1-5 in order
