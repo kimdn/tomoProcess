@@ -1,0 +1,57 @@
+#!/bin/bash
+#Converts multiple atlases collected in serialEM to individual images for stitching 
+
+for i in LMM*.st
+do
+
+	if [[ "$i" == "LMM*.st" ]]
+	then
+		echo "No LMM Montages Found"
+	else
+		basename1=${i#*-}
+		basename2=${basename1#*-}
+		basename3=${basename2%.*}
+		echo $basename3
+		pieces=$basename3".pieces"
+		blendout=$basename3".mrc"
+		tifname=$basename3".tif"
+
+		extractpieces -input $i -output $pieces
+		blendmont -imin $i -plin $pieces -roo $basename3 -imout $blendout
+		mrc2tif $blendout $tifname
+		
+		rm $blendout
+		rm $pieces
+		rm *.xef
+		rm *.yef
+
+	fi
+
+done
+
+for i in mmm*.mrc
+do
+	
+	if [[ "$i" == "mmm*.mrc" ]]
+	then
+		echo "No mmm Montages Found"
+	else
+		basename=${i%.*}
+		echo $basename
+		pieces=$basename".pieces"
+		blendout=$basename"_convert.mrc"
+		tifname=$basename".tif"
+
+		extractpieces -input $i -output $pieces
+		blendmont -imin $i -plin $pieces -roo $basename -imout $blendout
+		mrc2tif $blendout $tifname
+		
+		rm $blendout
+		rm $pieces
+		rm *.xef
+		rm *.yef
+		
+	fi
+done
+
+
