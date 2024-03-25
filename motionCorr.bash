@@ -6,13 +6,19 @@ export IMOD_DIR=/msc/krios/imod_4.9.12/
 
 yaml="metadata-tomo.yaml"
 motCorBin=$(cat $yaml | grep motCorr_bin | awk '{print $2}')
+dir="SumFrames"
+
+if [ -d "$dir" ] ;
+then
+	echo "Motion correction has already been performed, skipping..."
+else
 
 GainRefDM4=*.dm4
 dm2mrc $GainRefDM4 GainRef.mrc
 newstack -in GainRef.mrc -bi 1 -ou GainRef.mrc
 GainRef=GainRef.mrc
 
-mkdir SumFrames
+mkdir $dir
 
 #Check file suffix in frames folder and determine if raw frames are .tifs or .mrcs
 #Set suf and motcor (either -InTiff or -InMrc) variables depending on which is found
@@ -46,6 +52,8 @@ echo $base_name
 -FtBin $motCorBin \
 
 done
+
+fi
 
 end_time=$(date +%s)
 echo "It took $(($end_time - $start_time)) seconds to complete this job..."

@@ -16,23 +16,25 @@ topazDir="denoised"_$topazModel
 
 for entry in $dir/*
 do
+	tiltName=${entry#*/}
+	echo $tiltName
 
-tiltName=${entry#*/}
-echo $tiltName
+	if [[ "$topazModel" == "NA" ]]
+	then
+       		target=AlignedStacks/$tiltName
+	else
+		target=AlignedStacks/$tiltName/$topazDir
+	fi
 
-if [[ "$topazModel" == "NA" ]]
-then
-        target=AlignedStacks/$tiltName
-else
-        target=AlignedStacks/$tiltName/$topazDir
-fi
-
-echo $target
-
-batchruntomo -di cryoDirective.adoc -ro $tiltName -cu $target -m -g 1 
-cp $target/$tiltName/*.st $target
-
-done 
+	if [ -d $target/$tiltName ] ;
+	then
+		echo "IMOD has already been run in "$target/$tiltName/", skipping..."
+	else
+		batchruntomo -di cryoDirective.adoc -ro $tiltName -cu $target -m -g 1 > $target/${tiltName}_log.out 
+		cp $target/$tiltName/*.st $target
+		cp $target/$tiltName/*.rawtlt $target
+	fi
+done
 
 end_time=$(date +%s)
 echo "It took $(($end_time - $start_time)) seconds to complete this job..."
