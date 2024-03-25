@@ -3,43 +3,37 @@
 start_time=$(date +%s)
 export IMOD_DIR=/opt/apps/imod/imod_4.11.12/
 
-#Observe the directory depth of your subframes, alter -f parameter in cut to match
+yaml="metadata-tomo.yaml"
+topazModel=$(cat $yaml | grep topaz_model | awk '{print $2}')
+topazDir="denoised"_$topazModel
+
 home=`pwd`
-#Create output directory for aligned stacks
-mkdir AlignedStacks
+mkdir -p AlignedStacks
+for st in stacks/*.mdoc ; do
+dir=${st%%.*}
+tiltName=${dir#*/}
+pathfile=$tiltName"_path.list"
+listfile=$tiltName".list"
+rawtilt=$tiltName".rawtlt"
 
-cd stacks
-for st in *.mdoc ; do
-#basest is the basename for each batch stack
-basest=`basename $st .mrc.mdoc`
-#pathfile names the .list containing path to the file as noted in the .mdoc file under SubFramePath row
-pathfile=$basest"_path.list"
-#listfile names the .list containing the name and tilt angle for each image
-listfile=$basest".list"
-#rawtilt file used by imod
-rawtilt=$basest".rawtlt"
-#zero needed to append between each image name in ordered.list file
-zero=0
+mkdir -p AlignedStacks/$tiltName
 
-#read out current tilt series working on
-echo $basest with $listfile
+if [[ "$topazModel" == "NA" ]]
+then
+	target=AlignedStacks/$tiltName
+	subFrames=SumFrames
+else
+	target=AlignedStacks/$tiltName/$topazDir
+	mkdir -p $target
+	subFrames=SumFrames/$topazDir
+fi
 
-#Read/grep .mdoc for the subframe path for each image
-#awk removes "SubFramePath = X:" 
-#sed switchies windows "\" with "/" for use with unix (first) and removes carrige return (second)
-#writes to a list file ($pathfile)
-cat $st | grep SubFramePath | awk -F':' '{print $2}' | sed 's/\\/\//g' | sed "s/\r//g" > $pathfile
-
-mkdir $basest
+cat $st | grep SubFramePath | awk -F':' '{print $2}' | sed 's/\\/\//g' | sed "s/\r//g" > $target/${tiltName}_path.list
 
 Z=1
-
 #read each line of <$pathfile, get only file name, and transfer to new subdirectory
 while read -r Line; do
-
-#remove path before filename
 noPath="${Line##*/}"
-#remove suffix
 noSuf=${noPath%.*}
 suf="${noPath##*.}"
 echo $noSuf
@@ -51,52 +45,47 @@ echo $noSuf
 ang=`cat $st | grep -B25 $noPath | grep TiltAngle | cut -d= -f2 | sed "s/\r//g" `
 
 #creates listfile that newstack will read to order images by tilt angle
-printf "%3.4f\t%40s\n" $ang "${basest}-${Z}.mrc" >> ${basest}/$listfile 
+printf "%3.4f\t%40s\n" $ang "${tiltName}-${Z}.mrc" >> $target/${tiltName}.list
 echo $Z $ang
 
 #Target directory to copy frames from
-newline="../SumFrames/${noSuf}_sumavg.mrc"
+newline="$home/$subFrames/${noSuf}_sumavg.mrc"
 #Target location for individual frames corresponding to stack z number
-newname="${basest}/${basest}-${Z}.mrc"
+newname="$target/${tiltName}-${Z}.mrc"
 
 #copy motioncorrected images in /SumFrames/ to corresponding tilt series directory
 cp $newline $newname
-
 ((Z++))
-done <$pathfile
-
+done <$target/${tiltName}_path.list
 ((Z--))
+
 #convert .mrc files into .st for imod order rawtilt file#
-cd ${basest}
+cd $target
 #read angles and image names in listfile and sort from - to +, write to _ordered.temp
-sort -n $listfile | awk '{printf $2"\n"}' > ${basest}_ordered.temp
+sort -n ${tiltName}.list | awk '{printf $2"\n"}' > ${tiltName}_ordered.temp
 #determine the number of images in each stack (list file must begin with this number)
 num=$(ls *.mrc | wc -l)
-echo $num > ${basest}.sorted
+echo $num > ${tiltName}.sorted
 
 #Add file names to sorted file separated by zeros corresponding to their correct sorted order (- to +)
 for i in $(seq 1 $num); do
-name=$(head -n$i ${basest}_ordered.temp | tail -1)
+name=$(head -n$i ${tiltName}_ordered.temp | tail -1)
 echo $name
-echo $zero
-done >> ${basest}.sorted
+echo 0
+done >> ${tiltName}.sorted
 #Pull tilt angles from list file and create rawtilt file needed by Imod
-sort -n $listfile | cut -f1 > $rawtilt
+sort -n ${tiltName}.list | cut -f1 > ${tiltName}.rawtlt
 
 #Call imods newstack to stack each set of images into a .st file from - to +
-/opt/apps/imod/imod_4.11.12/bin/newstack -filei ${basest}.sorted -tilt *.rawtlt -ou ${basest}.st
+/opt/apps/imod/imod_4.11.12/bin/newstack -filei ${tiltName}.sorted -tilt *.rawtlt -ou ${tiltName}.st
 
 #Cleanup and reset for next tilt series
-rm ${basest}_ordered.temp
-rm ../$pathfile
+rm ${tiltName}_ordered.temp
+rm ${tiltName}_path.list
 cd $home
-mv stacks/${basest} AlignedStacks/
-cd stacks
+
 
 done
-
-echo "Done."
-
 end_time=$(date +%s)
 echo "It took $(($end_time - $start_time)) seconds to complete this job..."
 

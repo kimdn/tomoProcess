@@ -4,13 +4,15 @@ start_time=$(date +%s)
 
 export IMOD_DIR=/msc/krios/imod_4.9.12/
 
+yaml="metadata-tomo.yaml"
+motCorBin=$(cat $yaml | grep motCorr_bin | awk '{print $2}')
+
 GainRefDM4=*.dm4
-/msc/krios/imod_4.9.12/bin/dm2mrc $GainRefDM4 GainRef.mrc
-/msc/krios/imod_4.9.12/bin/newstack -in GainRef.mrc -bi 1 -ou GainRef.mrc
+dm2mrc $GainRefDM4 GainRef.mrc
+newstack -in GainRef.mrc -bi 1 -ou GainRef.mrc
 GainRef=GainRef.mrc
 
 mkdir SumFrames
-
 
 #Check file suffix in frames folder and determine if raw frames are .tifs or .mrcs
 #Set suf and motcor (either -InTiff or -InMrc) variables depending on which is found
@@ -41,10 +43,7 @@ echo $base_name
 -FlipGain 1 \
 -Iter 10 \
 -Tol 0.5 \
--FtBin 2 \
-#-Kv 300 \
-#-PixSize 0.34 \
-#-FmDose 7
+-FtBin $motCorBin \
 
 done
 
