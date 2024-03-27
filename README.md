@@ -8,15 +8,8 @@ Dependencies: This base directory must contain:
 
 Script Running Order:
 1) motionCorr.bash
-2) Restack_SerialEM.bash
-3) IMOD_Auto.bash
-*If the cryodirective.adoc file is already expected to be accurate for the dataset, only the allProcess.bash script needs to be run (it will call each script sequentially)
-**Optionally, topazDenoise.bash can be run followed by reconstructFromNoisy.bash to create denoised datasets
-
-Script Running Order for Denoising:
-1) motionCorr.bash
 2) topazDenoise.bash
-3) Restack_SerialEM_denoise.bash
-4) IMOD_Auto_denoise.bash
-5) reconstructFromDenoise.bash
-*allProcessDenoise.bash executes scripts 1-5 in order
+3) Restack_SerialEM.bash
+4) IMOD_Auto.bash
+*If the cryodirective.adoc file is already expected to be accurate for the dataset, only the allProcess.bash script needs to be run (it will call each script sequentially)
+**allProcessDenoise.bash executes scripts 1-4 in order
