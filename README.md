@@ -4,6 +4,7 @@ Dependencies: This base directory must contain:
 2) a /stacks/ directory which contains .mdoc metadata files for each tilt series
 3) a gain reference in .dm4 format (gain reference name is not critical but .dm4 format is)
 4) a cryodirective.adoc file
+5) a metadata-tomo.yaml file which specifies topaz_model and motCorr_bin options
 *The base directory is allowed to contain other files, such as atlases, medium mag montages, or other individual images. No other .dm4 files besides the gain may be in this base directory (if some present, move to a new subdirectory to prevent issues)
 
 Script Running Order:
