@@ -27,8 +27,12 @@ else
 		then 
 			suf=mrc
 			motCor=-InMrc
-		elif [ "${file##*.}" == "tif" ]
+		elif [ "${file##*.}" == "tiff" ]
 		then 
+			suf=tiff
+			motCor=-InTiff
+		elif [ "${file##*.}" == "tif" ]
+		then
 			suf=tif
 			motCor=-InTiff
 		fi
