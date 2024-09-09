@@ -6,6 +6,9 @@ export IMOD_DIR=/opt/apps/imod/imod_4.11.12/
 yaml="metadata-tomo.yaml"
 topazModel=$(cat $yaml | grep topaz_model | awk '{print $2}')
 topazDir="denoised"_$topazModel
+pxSize=$(cat $yaml | grep nominal_pixel_size | awk '{print $2}')
+motCorBin=$(cat $yaml | grep motCorr_bin | awk '{print $2}')
+altHeadPx=$(echo $pxSize $motCorBin | awk '{printf "%4.3f\n",$1*$2}')
 
 home=`pwd`
 mkdir -p AlignedStacks
@@ -80,7 +83,9 @@ for st in stacks/*.mdoc ; do
 		sort -n ${tiltName}.list | cut -f1 > ${tiltName}.rawtlt
 
 		#Call imods newstack to stack each set of images into a .st file from - to +
+		#Then modify header to write pixel size extracted from metadata.yaml file
 		newstack -filei ${tiltName}.sorted -tilt *.rawtlt -ou ${tiltName}.st
+		alterheader ${tiltName}.st -del $altHeadPx,$altHeadPx,$altHeadPx
 
 		#Cleanup and reset for next tilt series
 		rm ${tiltName}_ordered.temp
